@@ -161,3 +161,22 @@ Live KPIs, a directly-follows process flow and variant analysis update as you go
 Verticals: Procurement (P2P), Retail (O2C), Banking (loan origination), Insurance
 (claims), Healthcare, Manufacturing, Telecom, IT Service Management, Logistics and
 Utilities.
+
+### AI Process Designer (generative)
+
+Describe **any** process in plain language ("a pharmaceutical clinical trial approval
+process with ethics review and rework loops") and Claude designs a bespoke process
+model — domain-specific activities, roles, case attributes, source system and an
+exception path — which plugs straight into the generator to produce a unique event
+log, flow and CSV.
+
+- **Bring-your-own-key:** paste an Anthropic API key (stored only in your browser's
+  localStorage, sent directly to `api.anthropic.com`). Uses forced tool-calling on
+  `claude-opus-4-8` by default (Sonnet 5 / Haiku 4.5 selectable) for guaranteed
+  structured output. Works on any hosted deployment (GitHub Pages, BTP, Kyma).
+- **No-key fallback:** **Copy prompt** → run it in Claude → **Paste process JSON**.
+  This path also works inside the sandboxed claude.ai artifact, where a browser can't
+  call the API directly.
+
+No key is stored or transmitted anywhere except Anthropic; the app remains fully
+static with no backend.
