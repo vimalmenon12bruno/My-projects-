@@ -234,6 +234,34 @@
   .legend{display:flex; gap:16px; flex-wrap:wrap; padding:6px 16px 2px; font-family:var(--mono); font-size:11px; color:var(--ink-2)}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
 
+  /* BPMN reference model */
+  .panel-h .btn{padding:6px 10px; font-size:11px; letter-spacing:.03em}
+  .panel-h .btn svg{width:13px; height:13px}
+  .bpmnwrap{padding:4px 4px 14px}
+  .bpmn-scroll{overflow:auto; max-height:520px; padding:12px 14px}
+  svg.bpmn{display:block}
+  svg.bpmn .edge{stroke:var(--ink-3); stroke-width:1.5; fill:none}
+  svg.bpmn .edge.skip{stroke:var(--ink-3); stroke-dasharray:4 4; opacity:.7}
+  svg.bpmn .edge.exc{stroke:var(--crit); stroke-dasharray:5 4}
+  svg.bpmn .task{fill:var(--surface-2); stroke:var(--line-2); stroke-width:1.4}
+  svg.bpmn .task.auto{stroke:var(--accent-line)}
+  svg.bpmn .tasktxt{fill:var(--ink-1); font-family:var(--sans); font-size:11px; font-weight:600}
+  svg.bpmn .role{fill:var(--ink-3); font-family:var(--mono); font-size:8.5px; letter-spacing:.04em}
+  svg.bpmn .gw{fill:var(--surface-1); stroke:var(--warn); stroke-width:1.6}
+  svg.bpmn .gwx{stroke:var(--warn); stroke-width:1.7; fill:none}
+  svg.bpmn .ev{fill:var(--surface-1)}
+  svg.bpmn .ev.start{stroke:var(--accent); stroke-width:1.9}
+  svg.bpmn .ev.endok{stroke:var(--accent); stroke-width:2.6}
+  svg.bpmn .ev.end{stroke:var(--crit); stroke-width:2.6}
+  svg.bpmn .evtxt{fill:var(--ink-2); font-family:var(--mono); font-size:8.5px}
+  svg.bpmn .loop{stroke:var(--ink-2); stroke-width:1.2; fill:none}
+  svg.bpmn .arrow{fill:var(--ink-3)}
+  svg.bpmn .arrow.exc{fill:var(--crit)}
+  .bpmn-legend{display:flex; gap:16px; flex-wrap:wrap; padding:4px 16px 2px; font-family:var(--mono); font-size:11px; color:var(--ink-2); align-items:center}
+  .bpmn-note{padding:6px 16px 0; font-size:11.5px; color:var(--ink-3); line-height:1.5}
+  .bpmn-note b{color:var(--ink-2); font-weight:600}
+  #bpmnText{flex:1; min-height:300px; resize:none; border:none; outline:none; background:var(--plane); color:var(--ink-2); font-family:var(--mono); font-size:11px; line-height:1.5; padding:14px 16px; white-space:pre; overflow:auto}
+
   /* two-up */
   .twoup{display:grid; grid-template-columns:1.05fr 1fr; gap:18px}
   @media (max-width:900px){ .twoup{grid-template-columns:1fr} }
@@ -445,19 +473,39 @@
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-h"><span class="idx">04</span><h2>Reference BPMN Model — Conformance Target</h2>
+          <div class="spacer"></div>
+          <a class="btn" id="bpmnDl" download href="#" title="Download BPMN 2.0 XML">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>.bpmn
+          </a>
+          <button class="btn" id="bpmnView" type="button">XML</button>
+        </div>
+        <div class="bpmnwrap">
+          <div class="bpmn-scroll"><svg id="bpmnSvg" class="bpmn" role="img" aria-label="BPMN reference model"></svg></div>
+          <div class="bpmn-legend">
+            <span><i style="display:inline-block;width:16px;height:11px;border:1.4px solid var(--line-2);border-radius:2px;background:var(--surface-2);vertical-align:-1px;margin-right:6px"></i>activity</span>
+            <span style="color:var(--warn)">◇ gateway — optional / exception split</span>
+            <span style="color:var(--ink-2)">↻ loop — rework</span>
+            <span style="color:var(--crit)">╌ exception path → terminate</span>
+          </div>
+          <div class="bpmn-note">Standard <b>BPMN 2.0</b> model of the happy path with XOR gateways for optional steps, loop markers for rework, and the exception branch to a terminate end. Download the <b>.bpmn</b> and import it into SAP Signavio Process Intelligence as the <b>conformance target</b> to measure how well the discovered process (from the event log) fits this reference model.</div>
+        </div>
+      </section>
+
       <div class="twoup">
         <section class="panel">
-          <div class="panel-h"><span class="idx">04</span><h2>Variants</h2><div class="spacer"></div><span class="pill mono" id="variantMeta">—</span></div>
+          <div class="panel-h"><span class="idx">05</span><h2>Variants</h2><div class="spacer"></div><span class="pill mono" id="variantMeta">—</span></div>
           <div class="variants" id="variants"></div>
         </section>
         <section class="panel">
-          <div class="panel-h"><span class="idx">05</span><h2>Signavio Column Mapping</h2></div>
+          <div class="panel-h"><span class="idx">06</span><h2>Signavio Column Mapping</h2></div>
           <div class="maplist" id="maplist"></div>
         </section>
       </div>
 
       <section class="panel">
-        <div class="panel-h"><span class="idx">06</span><h2>Event Log</h2>
+        <div class="panel-h"><span class="idx">07</span><h2>Event Log</h2>
           <div class="spacer"></div>
           <span class="pill mono" id="rowMeta">—</span>
         </div>
@@ -498,6 +546,17 @@
     <div class="modal-f">
       <button class="btn primary" id="aiImport" type="button">Import &amp; generate</button>
       <span>Use <b>copy prompt</b>, paste it into Claude, then paste the JSON reply here to build a custom vertical.</span>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="bpmnModal" hidden>
+  <div class="modal-card">
+    <div class="modal-h">BPMN 2.0 XML<span class="spacer"></span><button id="bpmnClose" type="button" aria-label="Close">✕</button></div>
+    <textarea id="bpmnText" readonly spellcheck="false"></textarea>
+    <div class="modal-f">
+      <button class="btn primary" id="bpmnCopy" type="button">Select all &amp; copy</button>
+      <span>Save as <b>.bpmn</b> and import into Signavio, Camunda, bpmn.io or any BPMN 2.0 tool.</span>
     </div>
   </div>
 </div>
@@ -975,12 +1034,116 @@ function toCSV(g){
   return lines.join("\r\n");
 }
 
+/* ============================ BPMN reference model ============================ */
+/* Build a BPMN graph from the process: linear tasks, XOR gateways around optional
+   steps, loop markers for rework, and an XOR branch to a terminate end for the
+   exception. Coordinates are computed for the diagram interchange (DI) + SVG. */
+function bpmnModel(v){
+  const shapes=[], edges=[]; let n=0;
+  const ID=p=>p+"_"+(++n);
+  const MAINY=210, ROW=170, TW=126, TH=76, EV=42, GW=54, GAP=48;
+  const cX=s=>s.x+s.w/2, cY=s=>s.y+s.h/2;
+  const R=s=>({x:s.x+s.w,y:cY(s)}),Lf=s=>({x:s.x,y:cY(s)}),Tp=s=>({x:cX(s),y:s.y}),Bt=s=>({x:cX(s),y:s.y+s.h});
+  const mk=o=>{shapes.push(o);return o;};
+  const link=(a,b,wp,cls,name)=>{edges.push({id:ID("Flow"),from:a.id,to:b.id,wp,cls:cls||"",name:name||""});};
+  let x=54;
+  const start=mk({id:ID("StartEvent"),k:"start",name:"Start",x,y:MAINY-EV/2,w:EV,h:EV}); x+=EV+GAP;
+  let prev=start;
+  const flow=v.flow;
+  for(let i=0;i<flow.length;i++){
+    const s=flow[i];
+    if(s.p!==undefined){
+      const g1=mk({id:ID("Gateway"),k:"gw",x,y:MAINY-GW/2,w:GW,h:GW}); link(prev,g1,[R(prev),Lf(g1)]); x+=GW+GAP;
+      const t=mk({id:ID("Activity"),k:"task",name:s.a,role:s.role,auto:!!s.auto,loop:!!s.rw,x,y:MAINY-TH/2,w:TW,h:TH}); x+=TW+GAP;
+      const g2=mk({id:ID("Gateway"),k:"gw",x,y:MAINY-GW/2,w:GW,h:GW}); x+=GW+GAP;
+      link(g1,t,[R(g1),Lf(t)]); link(t,g2,[R(t),Lf(g2)]);
+      const upY=MAINY-GW/2-42;
+      link(g1,g2,[Tp(g1),{x:cX(g1),y:upY},{x:cX(g2),y:upY},Tp(g2)],"skip","skip");
+      prev=g2;
+    }else{
+      const t=mk({id:ID("Activity"),k:"task",name:s.a,role:s.role,auto:!!s.auto,loop:!!s.rw,x,y:MAINY-TH/2,w:TW,h:TH}); link(prev,t,[R(prev),Lf(t)]); x+=TW+GAP; prev=t;
+    }
+    if(v.exc && v.exc.after===s.a){
+      const gx=mk({id:ID("Gateway"),k:"gw",x,y:MAINY-GW/2,w:GW,h:GW}); link(prev,gx,[R(prev),Lf(gx)]); x+=GW+GAP; prev=gx;
+      const ry=MAINY+ROW; let ex=cX(gx)-TW/2; let eprev=gx; let first=true;
+      v.exc.path.forEach(p=>{
+        const et=mk({id:ID("Activity"),k:"task",name:p.a,role:p.role,auto:!!p.auto,x:ex,y:ry-TH/2,w:TW,h:TH});
+        if(first){ link(eprev,et,[Bt(gx),{x:cX(gx),y:ry-TH/2},Tp(et)],"exc","exception"); first=false; }
+        else link(eprev,et,[R(eprev),Lf(et)],"exc");
+        eprev=et; ex+=TW+GAP;
+      });
+      const ee=mk({id:ID("EndEvent"),k:"end",name:"Terminated",bad:true,x:ex,y:ry-EV/2,w:EV,h:EV}); link(eprev,ee,[R(eprev),Lf(ee)],"exc");
+    }
+  }
+  const end=mk({id:ID("EndEvent"),k:"end",name:"Completed",x,y:MAINY-EV/2,w:EV,h:EV}); link(prev,end,[R(prev),Lf(end)]); x+=EV;
+  let mX=0,mY=0; shapes.forEach(s=>{mX=Math.max(mX,s.x+s.w);mY=Math.max(mY,s.y+s.h);});
+  return {shapes,edges,width:mX+54,height:mY+40};
+}
+function xmlEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function bpmnXML(v,m){
+  const sid=s=>s.replace(/[^A-Za-z0-9_]/g,"_");
+  const pid="Process_"+sid(v.key);
+  const inc={},out={};
+  m.edges.forEach(e=>{(out[e.from]=out[e.from]||[]).push(e.id);(inc[e.to]=inc[e.to]||[]).push(e.id);});
+  const io=id=>((inc[id]||[]).map(f=>`<bpmn:incoming>${f}</bpmn:incoming>`).join("")+(out[id]||[]).map(f=>`<bpmn:outgoing>${f}</bpmn:outgoing>`).join(""));
+  let el="";
+  m.shapes.forEach(s=>{
+    if(s.k==="start") el+=`<bpmn:startEvent id="${s.id}" name="${xmlEsc(s.name)}">${io(s.id)}</bpmn:startEvent>`;
+    else if(s.k==="end") el+=`<bpmn:endEvent id="${s.id}" name="${xmlEsc(s.name)}">${io(s.id)}${s.bad?"<bpmn:terminateEventDefinition/>":""}</bpmn:endEvent>`;
+    else if(s.k==="gw") el+=`<bpmn:exclusiveGateway id="${s.id}">${io(s.id)}</bpmn:exclusiveGateway>`;
+    else{const tag=s.auto?"serviceTask":"userTask"; el+=`<bpmn:${tag} id="${s.id}" name="${xmlEsc(s.name)}">${io(s.id)}${s.loop?"<bpmn:standardLoopCharacteristics/>":""}</bpmn:${tag}>`;}
+  });
+  let fl=""; m.edges.forEach(e=>{fl+=`<bpmn:sequenceFlow id="${e.id}" sourceRef="${e.from}" targetRef="${e.to}"${e.name?` name="${xmlEsc(e.name)}"`:""}/>`;});
+  let di=""; m.shapes.forEach(s=>{di+=`<bpmndi:BPMNShape id="${s.id}_di" bpmnElement="${s.id}"><dc:Bounds x="${Math.round(s.x)}" y="${Math.round(s.y)}" width="${s.w}" height="${s.h}"/></bpmndi:BPMNShape>`;});
+  m.edges.forEach(e=>{di+=`<bpmndi:BPMNEdge id="${e.id}_di" bpmnElement="${e.id}">`+e.wp.map(p=>`<di:waypoint x="${Math.round(p.x)}" y="${Math.round(p.y)}"/>`).join("")+`</bpmndi:BPMNEdge>`;});
+  return `<?xml version="1.0" encoding="UTF-8"?>\n`+
+    `<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_${sid(v.key)}" targetNamespace="http://bpmn.io/schema/bpmn" exporter="PROCESS//FORGE" exporterVersion="1.0">`+
+    `<bpmn:process id="${pid}" name="${xmlEsc(v.name)}" isExecutable="false">${el}${fl}</bpmn:process>`+
+    `<bpmndi:BPMNDiagram id="Diagram_1"><bpmndi:BPMNPlane id="Plane_1" bpmnElement="${pid}">${di}</bpmndi:BPMNPlane></bpmndi:BPMNDiagram>`+
+    `</bpmn:definitions>`;
+}
+function wrapText(t,maxC,maxL){maxL=maxL||2;const w=String(t).split(/\s+/);const lines=[];let cur="";
+  for(const word of w){const test=cur?cur+" "+word:word; if(test.length>maxC && cur){lines.push(cur);cur=word; if(lines.length===maxL-1){}}else cur=test;}
+  if(cur)lines.push(cur);
+  if(lines.length>maxL){const keep=lines.slice(0,maxL); keep[maxL-1]=keep[maxL-1].slice(0,maxC-1).replace(/\s+\S*$/,"")+"…"; return keep;}
+  return lines;}
+function renderBPMN(v){
+  const m=bpmnModel(v); state.bpmnXml=bpmnXML(v,m);
+  const cX=s=>s.x+s.w/2, cY=s=>s.y+s.h/2, P=[];
+  P.push(`<defs><marker id="pf-ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path class="arrow" d="M0 0 L7 3 L0 6 z"/></marker><marker id="pf-ax" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path class="arrow exc" d="M0 0 L7 3 L0 6 z"/></marker></defs>`);
+  m.edges.forEach(e=>{const d=e.wp.map((p,i)=>(i?"L":"M")+Math.round(p.x)+" "+Math.round(p.y)).join(" ");
+    P.push(`<path class="edge ${e.cls}" d="${d}" marker-end="url(#${e.cls==="exc"?"pf-ax":"pf-ah"})"/>`);});
+  m.shapes.forEach(s=>{
+    if(s.k==="task"){
+      P.push(`<rect class="task ${s.auto?"auto":""}" x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="7"/>`);
+      const lines=wrapText(s.name,17,2); const sy=cY(s)-(lines.length-1)*7-3;
+      lines.forEach((ln,i)=>P.push(`<text class="tasktxt" x="${cX(s)}" y="${sy+i*14}" text-anchor="middle">${xmlEsc(ln)}</text>`));
+      if(s.role)P.push(`<text class="role" x="${cX(s)}" y="${s.y+s.h-9}" text-anchor="middle">${xmlEsc((s.auto?"⚙ ":"")+String(s.role).toUpperCase())}</text>`);
+      if(s.loop){const lx=cX(s),ly=s.y+s.h-5;P.push(`<path class="loop" d="M${lx-4} ${ly} a4 4 0 1 0 3 -3.6"/><path d="M${lx-1.2} ${ly-4.4} l2.6 .6 l-1.4 2.1 z" class="arrow"/>`);}
+    }else if(s.k==="gw"){
+      const c=cX(s),mid=cY(s);
+      P.push(`<path class="gw" d="M${c} ${s.y} L${s.x+s.w} ${mid} L${c} ${s.y+s.h} L${s.x} ${mid} Z"/>`);
+      P.push(`<path class="gwx" d="M${c-7} ${mid-7} L${c+7} ${mid+7} M${c+7} ${mid-7} L${c-7} ${mid+7}"/>`);
+    }else{
+      const c=cX(s),mid=cY(s),cls=s.k==="start"?"start":(s.bad?"end":"endok");
+      P.push(`<circle class="ev ${cls}" cx="${c}" cy="${mid}" r="${s.w/2-2}"/>`);
+      P.push(`<text class="evtxt" x="${c}" y="${s.y+s.h+11}" text-anchor="middle">${xmlEsc(s.name)}</text>`);
+    }
+  });
+  const svg=$("#bpmnSvg");
+  svg.setAttribute("viewBox",`0 0 ${m.width} ${m.height}`);
+  svg.setAttribute("width",m.width); svg.setAttribute("height",m.height);
+  svg.style.width=m.width+"px"; svg.style.height=m.height+"px";
+  svg.innerHTML=P.join("");
+  const a=$("#bpmnDl"); if(a){a.href="data:application/bpmn20-xml;charset=utf-8,"+encodeURIComponent(state.bpmnXml); a.setAttribute("download","signavio_"+v.key+"_reference.bpmn");}
+}
+
 /* ============================ Render ============================ */
 const $=s=>document.querySelector(s);
 const fmtN=n=>n.toLocaleString("en-US");
 function fmtDur(h){if(h<24)return h.toFixed(1)+" h";const d=h/24;if(d<10)return d.toFixed(1)+" d";return Math.round(d)+" d";}
 
-let state={vIndex:0, cases:300, noise:.45, days:90, seed:42, current:null, csv:""};
+let state={vIndex:0, cases:300, noise:.45, days:90, seed:42, current:null, csv:"", bpmnXml:""};
 
 function renderVerticalList(){
   const el=$("#verticalList"); el.innerHTML="";
@@ -1099,7 +1262,7 @@ function run(){
     const g=generate(v,{cases:state.cases,noise:state.noise,days:state.days,seed:state.seed});
     const a=analyze(g);
     state.current=g;
-    renderHero(v); renderKPIs(a); renderFlow(v,a); renderVariants(a); renderMapping(g); renderTable(g);
+    renderHero(v); renderKPIs(a); renderFlow(v,a); renderBPMN(v); renderVariants(a); renderMapping(g); renderTable(g);
     refreshDownload(g);
     kp.style.opacity="1";
   });
@@ -1203,7 +1366,14 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("#csvClose").addEventListener("click",closeModal);
   $("#csvModal").addEventListener("click",e=>{if(e.target.id==="csvModal")closeModal();});
   $("#csvSelectCopy").addEventListener("click",()=>{const ok=execCopy(state.csv||"");toast(ok?"Copied to clipboard":"Press Ctrl/Cmd+C to copy the selected text");});
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();$("#aiModal").hidden=true;}});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();$("#aiModal").hidden=true;$("#bpmnModal").hidden=true;}});
+
+  // BPMN reference model
+  $("#bpmnDl").addEventListener("click",()=>{const v=V[state.vIndex]; toast("Downloading BPMN — "+v.prefix+" reference model");});
+  $("#bpmnView").addEventListener("click",()=>{$("#bpmnText").value=state.bpmnXml||"";$("#bpmnModal").hidden=false;requestAnimationFrame(()=>{$("#bpmnText").focus();$("#bpmnText").select();});});
+  $("#bpmnClose").addEventListener("click",()=>{$("#bpmnModal").hidden=true;});
+  $("#bpmnModal").addEventListener("click",e=>{if(e.target.id==="bpmnModal")$("#bpmnModal").hidden=true;});
+  $("#bpmnCopy").addEventListener("click",()=>{const ok=execCopy(state.bpmnXml||"");toast(ok?"BPMN XML copied":"Press Ctrl/Cmd+C to copy");});
 
   // AI Process Designer
   const keyEl=$("#aiKey");

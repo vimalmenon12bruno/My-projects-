@@ -180,3 +180,19 @@ log, flow and CSV.
 
 No key is stored or transmitted anywhere except Anthropic; the app remains fully
 static with no backend.
+
+### Reference BPMN model (conformance target)
+
+For the selected process — built-in **or** AI-designed — the app generates a
+standardized **BPMN 2.0** model of the happy path and renders it inline as a diagram:
+
+- **optional steps** → XOR gateway split/join (take the task or skip it)
+- **rework** → BPMN loop markers (`standardLoopCharacteristics`)
+- **exception path** → an XOR branch to a **terminate** end event
+- **automated steps** → `serviceTask`; human steps → `userTask`
+
+Download the **`.bpmn`** (valid BPMN 2.0 XML with full diagram interchange) and import
+it into **SAP Signavio Process Intelligence** as the **conformance target**, then run
+conformance/fitness analysis of the discovered process (from the generated event log)
+against this reference model. The `.bpmn` also opens in Camunda, bpmn.io and any other
+BPMN 2.0 tool. Generated fully client-side — no API key required.
