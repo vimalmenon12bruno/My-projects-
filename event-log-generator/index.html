@@ -151,7 +151,7 @@
   .seg{flex:1; text-align:center; font-family:var(--mono); font-size:12px; color:var(--ink-2); padding:7px 4px; border-radius:6px; cursor:pointer; border:1px solid transparent}
   .seg.on{background:var(--accent-dim); color:var(--accent); border-color:var(--accent-line)}
   .btn{
-    font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; cursor:pointer;
+    font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; cursor:pointer; text-decoration:none;
     border-radius:8px; padding:10px 12px; border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-1);
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
   }
@@ -261,6 +261,21 @@
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
   .toast::before{content:"›  "; color:var(--accent)}
 
+  .linkbtn{background:none; border:none; color:var(--ink-3); font-family:var(--mono); font-size:11px; cursor:pointer; padding:6px 0 0; letter-spacing:.03em; width:100%; text-align:center}
+  .linkbtn:hover{color:var(--accent)}
+
+  .modal[hidden]{display:none}
+  .modal{position:fixed; inset:0; z-index:80; background:rgba(4,8,10,.66); backdrop-filter:blur(4px); display:grid; place-items:center; padding:24px}
+  .modal-card{width:min(760px,94vw); max-height:82vh; display:flex; flex-direction:column; background:var(--surface-1); border:1px solid var(--line-2); border-radius:14px; box-shadow:var(--shadow); overflow:hidden}
+  .modal-h{display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+  .modal-h .spacer{margin-left:auto}
+  .modal-h button{background:none; border:none; color:var(--ink-2); font-size:15px; cursor:pointer; line-height:1}
+  .modal-h button:hover{color:var(--ink-1)}
+  #csvText{flex:1; min-height:300px; resize:none; border:none; outline:none; background:var(--plane); color:var(--ink-2); font-family:var(--mono); font-size:11.5px; line-height:1.55; padding:14px 16px; white-space:pre; overflow:auto}
+  .modal-f{display:flex; align-items:center; gap:12px; padding:12px 16px; border-top:1px solid var(--line); flex-wrap:wrap}
+  .modal-f span{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+  .modal-f span b{color:var(--accent); font-weight:600}
+
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.001ms !important; transition-duration:.001ms !important}
   }
@@ -331,9 +346,10 @@
               <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
             </button>
           </div>
-          <button class="btn" id="dlBtn" type="button" style="width:100%">
+          <a class="btn" id="dlBtn" download href="#" style="width:100%">
             <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>Download Signavio CSV
-          </button>
+          </a>
+          <button class="linkbtn" id="rawBtn" type="button">or view / copy raw CSV ›</button>
         </div>
       </section>
     </aside>
@@ -383,9 +399,9 @@
         <div class="tfoot">
           <span id="previewNote">showing first 200 of — events</span>
           <span class="spacer"></span>
-          <button class="btn" id="dlBtn2" type="button">
+          <a class="btn" id="dlBtn2" download href="#">
             <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>Download full CSV
-          </button>
+          </a>
         </div>
       </section>
     </main>
@@ -397,6 +413,17 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<div class="modal" id="csvModal" hidden>
+  <div class="modal-card">
+    <div class="modal-h">Event Log CSV<span class="spacer"></span><button id="csvClose" type="button" aria-label="Close">✕</button></div>
+    <textarea id="csvText" readonly spellcheck="false"></textarea>
+    <div class="modal-f">
+      <button class="btn primary" id="csvSelectCopy" type="button">Select all &amp; copy</button>
+      <span>If the download button is blocked, copy this and save it as a <b>.csv</b> file.</span>
+    </div>
+  </div>
+</div>
 
 <script>
 "use strict";
@@ -748,7 +775,7 @@ const $=s=>document.querySelector(s);
 const fmtN=n=>n.toLocaleString("en-US");
 function fmtDur(h){if(h<24)return h.toFixed(1)+" h";const d=h/24;if(d<10)return d.toFixed(1)+" d";return Math.round(d)+" d";}
 
-let state={vIndex:0, cases:300, noise:.45, days:90, seed:42, current:null};
+let state={vIndex:0, cases:300, noise:.45, days:90, seed:42, current:null, csv:""};
 
 function renderVerticalList(){
   const el=$("#verticalList"); el.innerHTML="";
@@ -867,6 +894,7 @@ function run(){
     const a=analyze(g);
     state.current=g;
     renderHero(v); renderKPIs(a); renderFlow(v,a); renderVariants(a); renderMapping(g); renderTable(g);
+    refreshDownload(g);
     kp.style.opacity="1";
   });
 }
@@ -875,24 +903,34 @@ function run(){
 let toastT;
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2000);}
 
-/* download / copy */
-function download(){
-  const g=state.current; if(!g)return;
-  const csv=toCSV(g);
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download=`signavio_${g.v.key}_eventlog_${g.opts.days}d_${g.opts.seed}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1500);
-  toast(`Downloaded ${fmtN(g.rows.length)} events · ${g.v.prefix} log`);
+/* download / copy — sandbox-safe: real <a download> with data: URI (blob:/synthetic
+   clicks are blocked inside the artifact iframe), with clipboard + raw-CSV fallbacks */
+function filenameFor(g){return `signavio_${g.v.key}_eventlog_${g.opts.days}d_${g.opts.seed}.csv`;}
+function refreshDownload(g){
+  const csv=toCSV(g); state.csv=csv;
+  const uri="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  const fn=filenameFor(g);
+  ["#dlBtn","#dlBtn2"].forEach(sel=>{const a=$(sel); if(a){a.href=uri; a.setAttribute("download",fn);}});
+}
+function execCopy(text){
+  try{
+    const ta=document.createElement("textarea"); ta.value=text;
+    ta.style.position="fixed"; ta.style.top="-2000px"; ta.setAttribute("readonly","");
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok=document.execCommand("copy"); ta.remove(); return ok;
+  }catch(e){return false;}
 }
 async function copyCSV(){
-  const g=state.current; if(!g)return;
-  const csv=toCSV(g);
-  try{await navigator.clipboard.writeText(csv);toast(`Copied ${fmtN(g.rows.length)} rows to clipboard`);}
-  catch(e){toast("Clipboard blocked — use Download instead");}
+  const csv=state.csv||""; if(!csv)return;
+  const rows=(state.current&&state.current.rows.length)||0;
+  let ok=false;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(csv); ok=true; } }catch(e){}
+  if(!ok) ok=execCopy(csv);
+  if(ok) toast(`Copied ${fmtN(rows)} rows to clipboard`);
+  else openModal();
 }
+function openModal(){ const m=$("#csvModal"); $("#csvText").value=state.csv||""; m.hidden=false; requestAnimationFrame(()=>{$("#csvText").focus();$("#csvText").select();}); }
+function closeModal(){ $("#csvModal").hidden=true; }
 
 /* ============================ Wire up ============================ */
 function setRangeFill(inp){const min=+inp.min,max=+inp.max;inp.style.setProperty("--fill",((inp.value-min)/(max-min)*100)+"%");}
@@ -920,9 +958,14 @@ document.addEventListener("DOMContentLoaded",()=>{
   $("#shuffleBtn").addEventListener("click",()=>{state.seed=Math.floor(Math.random()*99999);seedI.value=state.seed;run();});
 
   $("#genBtn").addEventListener("click",run);
-  $("#dlBtn").addEventListener("click",download);
-  $("#dlBtn2").addEventListener("click",download);
+  // downloads fire natively from the <a download> anchors; just surface a toast
+  ["#dlBtn","#dlBtn2"].forEach(sel=>$(sel).addEventListener("click",()=>{const g=state.current; if(g) toast(`Downloading ${fmtN(g.rows.length)} events · ${g.v.prefix} log`);}));
   $("#copyBtn").addEventListener("click",copyCSV);
+  $("#rawBtn").addEventListener("click",openModal);
+  $("#csvClose").addEventListener("click",closeModal);
+  $("#csvModal").addEventListener("click",e=>{if(e.target.id==="csvModal")closeModal();});
+  $("#csvSelectCopy").addEventListener("click",()=>{const ok=execCopy(state.csv||"");toast(ok?"Copied to clipboard":"Press Ctrl/Cmd+C to copy the selected text");});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
 
   // theme toggle
   const tb=$("#themeBtn");
