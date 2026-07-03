@@ -1,0 +1,938 @@
+<title>PROCESS//FORGE — Event Log Studio for SAP Signavio Process Intelligence</title>
+<style>
+  :root{
+    --plane:#080b0e; --surface-1:#10151b; --surface-2:#161d25; --surface-3:#1d2732;
+    --ink-1:#eaf1f4; --ink-2:#93a4ae; --ink-3:#63757f;
+    --line:rgba(140,190,210,.10); --line-2:rgba(140,190,210,.18);
+    --accent:#33d1c8; --accent-ink:#04211f; --accent-dim:rgba(51,209,200,.14); --accent-line:rgba(51,209,200,.40);
+    --warn:#f7b733; --warn-dim:rgba(247,183,51,.14);
+    --crit:#f0616b; --crit-dim:rgba(240,97,107,.14);
+    --violet:#8f83f6; --violet-dim:rgba(143,131,246,.14);
+    --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 34px -18px rgba(0,0,0,.7);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --r:12px;
+    color-scheme:dark;
+  }
+  @media (prefers-color-scheme:light){
+    :root{
+      --plane:#e9edef; --surface-1:#ffffff; --surface-2:#f3f6f8; --surface-3:#e8eef0;
+      --ink-1:#0b1519; --ink-2:#48585f; --ink-3:#7a8990;
+      --line:rgba(12,40,50,.12); --line-2:rgba(12,40,50,.20);
+      --accent:#0c8f83; --accent-ink:#ffffff; --accent-dim:rgba(12,143,131,.12); --accent-line:rgba(12,143,131,.42);
+      --warn:#b47610; --warn-dim:rgba(180,118,16,.13);
+      --crit:#cf3a44; --crit-dim:rgba(207,58,68,.12);
+      --violet:#5b4bd6; --violet-dim:rgba(91,75,214,.12);
+      --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 12px 30px -20px rgba(20,40,50,.4);
+      color-scheme:light;
+    }
+  }
+  :root[data-theme="dark"]{
+    --plane:#080b0e; --surface-1:#10151b; --surface-2:#161d25; --surface-3:#1d2732;
+    --ink-1:#eaf1f4; --ink-2:#93a4ae; --ink-3:#63757f;
+    --line:rgba(140,190,210,.10); --line-2:rgba(140,190,210,.18);
+    --accent:#33d1c8; --accent-ink:#04211f; --accent-dim:rgba(51,209,200,.14); --accent-line:rgba(51,209,200,.40);
+    --warn:#f7b733; --warn-dim:rgba(247,183,51,.14);
+    --crit:#f0616b; --crit-dim:rgba(240,97,107,.14);
+    --violet:#8f83f6; --violet-dim:rgba(143,131,246,.14);
+    --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 34px -18px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+  :root[data-theme="light"]{
+    --plane:#e9edef; --surface-1:#ffffff; --surface-2:#f3f6f8; --surface-3:#e8eef0;
+    --ink-1:#0b1519; --ink-2:#48585f; --ink-3:#7a8990;
+    --line:rgba(12,40,50,.12); --line-2:rgba(12,40,50,.20);
+    --accent:#0c8f83; --accent-ink:#ffffff; --accent-dim:rgba(12,143,131,.12); --accent-line:rgba(12,143,131,.42);
+    --warn:#b47610; --warn-dim:rgba(180,118,16,.13);
+    --crit:#cf3a44; --crit-dim:rgba(207,58,68,.12);
+    --violet:#5b4bd6; --violet-dim:rgba(91,75,214,.12);
+    --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 12px 30px -20px rgba(20,40,50,.4);
+    color-scheme:light;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{
+    min-height:100vh; background:var(--plane); color:var(--ink-1);
+    font-family:var(--sans); font-size:15px; line-height:1.5;
+    background-image:
+      radial-gradient(120% 90% at 100% -10%, var(--accent-dim), transparent 55%),
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:auto, 46px 46px, 46px 46px;
+  }
+  a{color:inherit}
+  .mono{font-family:var(--mono)}
+  ::selection{background:var(--accent-dim)}
+
+  /* ---------- header ---------- */
+  header.top{
+    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:14px 24px;
+    background:color-mix(in srgb, var(--plane) 82%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:center; gap:12px; margin-right:auto}
+  .glyph{width:34px;height:34px;flex:none}
+  .glyph .node{fill:var(--accent)}
+  .glyph .edge{stroke:var(--accent);stroke-width:1.6;opacity:.55}
+  .wordmark{font-family:var(--mono); font-weight:600; letter-spacing:.02em; font-size:16px; line-height:1}
+  .wordmark b{color:var(--accent); font-weight:600}
+  .wordmark .sub{display:block; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); margin-top:4px; font-weight:500}
+  .top-meta{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .pill{
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11.5px;
+    letter-spacing:.03em; color:var(--ink-2); padding:6px 11px; border:1px solid var(--line-2);
+    border-radius:999px; background:var(--surface-1);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+  .live .dot{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .theme-btn{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.04em; color:var(--ink-2);
+    background:var(--surface-1); border:1px solid var(--line-2); border-radius:999px;
+    padding:6px 12px; cursor:pointer;
+  }
+  .theme-btn:hover{color:var(--ink-1);border-color:var(--accent-line)}
+
+  /* ---------- shell ---------- */
+  .shell{display:grid; grid-template-columns:344px minmax(0,1fr); gap:22px; padding:22px 24px 40px; max-width:1500px; margin:0 auto}
+  @media (max-width:1020px){ .shell{grid-template-columns:1fr; padding:18px} }
+
+  .panel{background:var(--surface-1); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+  .panel-h{display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line)}
+  .panel-h h2{margin:0; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2); font-weight:600; font-family:var(--mono)}
+  .panel-h .idx{font-family:var(--mono); font-size:11px; color:var(--accent); border:1px solid var(--accent-line); border-radius:6px; padding:2px 6px}
+  .panel-h .spacer{margin-left:auto}
+
+  /* ---------- sidebar ---------- */
+  aside{display:flex; flex-direction:column; gap:18px; align-self:start; position:sticky; top:76px}
+  @media (max-width:1020px){ aside{position:static} }
+
+  .verticals{display:flex; flex-direction:column; padding:8px; gap:2px; max-height:none}
+  .vbtn{
+    display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:11px;
+    text-align:left; width:100%; cursor:pointer;
+    background:transparent; border:1px solid transparent; border-radius:9px; padding:9px 10px; color:inherit;
+  }
+  .vbtn:hover{background:var(--surface-2)}
+  .vbtn.active{background:var(--surface-2); border-color:var(--accent-line)}
+  .vbtn .vico{
+    width:34px;height:34px;border-radius:8px;display:grid;place-items:center;
+    background:var(--surface-3); border:1px solid var(--line-2); color:var(--accent);
+  }
+  .vbtn.active .vico{background:var(--accent-dim); border-color:var(--accent-line)}
+  .vbtn .vico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .vname{font-weight:600; font-size:13.5px; line-height:1.2}
+  .vsys{font-family:var(--mono); font-size:10.5px; color:var(--ink-3); letter-spacing:.02em; margin-top:2px}
+  .vbtn .vchev{color:var(--ink-3); font-family:var(--mono); font-size:12px; opacity:0}
+  .vbtn.active .vchev{opacity:1; color:var(--accent)}
+
+  .controls{padding:16px; display:flex; flex-direction:column; gap:18px}
+  .field{display:flex; flex-direction:column; gap:9px}
+  .field .lab{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+  .field .lab span{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2); font-family:var(--mono)}
+  .field .lab b{font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:600}
+  input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px;
+    background:linear-gradient(90deg,var(--accent) var(--fill,50%), var(--surface-3) var(--fill,50%)); outline:none; margin:4px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px;height:16px;border-radius:50%;
+    background:var(--accent); border:3px solid var(--plane); cursor:pointer; box-shadow:0 0 0 1px var(--accent-line)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%; background:var(--accent);
+    border:3px solid var(--plane); cursor:pointer; box-shadow:0 0 0 1px var(--accent-line)}
+  .seedrow{display:flex; gap:8px}
+  .seedrow input{
+    flex:1; min-width:0; font-family:var(--mono); font-size:13px; color:var(--ink-1);
+    background:var(--surface-2); border:1px solid var(--line-2); border-radius:8px; padding:9px 11px;
+  }
+  .seedrow input:focus{outline:none; border-color:var(--accent-line)}
+  .segwrap{display:flex; background:var(--surface-2); border:1px solid var(--line-2); border-radius:8px; padding:3px; gap:3px}
+  .seg{flex:1; text-align:center; font-family:var(--mono); font-size:12px; color:var(--ink-2); padding:7px 4px; border-radius:6px; cursor:pointer; border:1px solid transparent}
+  .seg.on{background:var(--accent-dim); color:var(--accent); border-color:var(--accent-line)}
+  .btn{
+    font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; cursor:pointer;
+    border-radius:8px; padding:10px 12px; border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-1);
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn:hover{border-color:var(--accent-line)}
+  .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btnrow{display:grid; grid-template-columns:1fr auto; gap:8px}
+
+  /* ---------- main ---------- */
+  main{display:flex; flex-direction:column; gap:18px; min-width:0}
+  .hero{padding:18px 18px 6px}
+  .hero .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent)}
+  .hero h1{margin:8px 0 6px; font-size:26px; line-height:1.12; letter-spacing:-.01em; text-wrap:balance}
+  .hero p{margin:0; color:var(--ink-2); max-width:70ch; font-size:14.5px}
+  .hero .obj{display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+  .hero .obj div{font-family:var(--mono); font-size:11.5px; color:var(--ink-3)}
+  .hero .obj b{color:var(--ink-1); font-weight:600}
+
+  /* KPI strip */
+  .kpis{display:grid; grid-template-columns:repeat(6,1fr); gap:12px}
+  @media (max-width:1180px){ .kpis{grid-template-columns:repeat(3,1fr)} }
+  @media (max-width:560px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+  .kpi{background:var(--surface-1); border:1px solid var(--line); border-radius:10px; padding:13px 14px; position:relative; overflow:hidden}
+  .kpi .k-lab{font-family:var(--mono); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3)}
+  .kpi .k-val{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:23px; font-weight:600; margin-top:8px; letter-spacing:-.01em}
+  .kpi .k-sub{font-size:11px; color:var(--ink-3); margin-top:3px}
+  .kpi.accent .k-val{color:var(--accent)}
+  .kpi::after{content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--line); }
+  .kpi.accent::after{background:linear-gradient(90deg,var(--accent),transparent)}
+
+  /* flow ribbon */
+  .flowwrap{padding:6px 4px 16px}
+  .flow-scroll{overflow-x:auto; padding:14px 16px 6px}
+  .flow{display:flex; align-items:stretch; gap:0; min-width:min-content}
+  .fnode{
+    flex:none; width:158px; background:var(--surface-2); border:1px solid var(--line-2); border-radius:10px;
+    padding:11px 12px; position:relative;
+  }
+  .fnode.start{border-color:var(--accent-line)}
+  .fnode .fstep{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.08em}
+  .fnode .fact{font-size:13px; font-weight:600; line-height:1.2; margin:6px 0 8px; text-wrap:balance}
+  .fnode .frole{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10.5px; color:var(--ink-2)}
+  .fnode .frole i{width:6px;height:6px;border-radius:50%;background:var(--violet);font-style:normal}
+  .fbar{height:4px; border-radius:3px; background:var(--surface-3); margin-top:9px; overflow:hidden}
+  .fbar i{display:block; height:100%; border-radius:3px; background:var(--accent)}
+  .fnode .fpct{font-family:var(--mono); font-size:10px; color:var(--ink-3); margin-top:5px}
+  .farrow{flex:none; width:30px; display:grid; place-items:center; color:var(--ink-3)}
+  .farrow svg{width:22px;height:14px;stroke:var(--accent);fill:none;stroke-width:1.6;opacity:.7}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; padding:6px 16px 2px; font-family:var(--mono); font-size:11px; color:var(--ink-2)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+  /* two-up */
+  .twoup{display:grid; grid-template-columns:1.05fr 1fr; gap:18px}
+  @media (max-width:900px){ .twoup{grid-template-columns:1fr} }
+
+  /* variants */
+  .variants{padding:8px 16px 16px; display:flex; flex-direction:column; gap:11px}
+  .vrow{display:grid; grid-template-columns:1fr auto; gap:10px 12px; align-items:center}
+  .vrow .vmeta{min-width:0}
+  .vtrace{font-family:var(--mono); font-size:11.5px; color:var(--ink-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .vtag{display:inline-block; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; padding:1px 6px; border-radius:5px; margin-right:8px; vertical-align:1px}
+  .vtag.happy{color:var(--accent); background:var(--accent-dim)}
+  .vtag.rework{color:var(--warn); background:var(--warn-dim)}
+  .vtag.exception{color:var(--crit); background:var(--crit-dim)}
+  .vtag.variant{color:var(--ink-2); background:var(--surface-3)}
+  .vbar-track{grid-column:1/-1; height:8px; border-radius:5px; background:var(--surface-3); overflow:hidden; position:relative}
+  .vbar-fill{height:100%; border-radius:5px; transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .vbar-fill.happy{background:var(--accent)}
+  .vbar-fill.rework{background:var(--warn)}
+  .vbar-fill.exception{background:var(--crit)}
+  .vbar-fill.variant{background:color-mix(in srgb, var(--accent) 55%, var(--surface-3))}
+  .vcount{font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:12px; color:var(--ink-1); white-space:nowrap}
+  .vcount small{color:var(--ink-3)}
+
+  /* attributes / mapping */
+  .maplist{padding:8px 16px 16px; display:flex; flex-direction:column; gap:2px}
+  .maprow{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:8px 4px; border-bottom:1px dashed var(--line)}
+  .maprow:last-child{border-bottom:none}
+  .maprow .mfield{font-family:var(--mono); font-size:12px; color:var(--ink-1)}
+  .maprow .mkind{font-family:var(--mono); font-size:10.5px; color:var(--ink-3)}
+  .maprow .mrole{font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; padding:2px 7px; border-radius:5px; background:var(--surface-3); color:var(--ink-2); border:1px solid var(--line-2)}
+  .maprow .mrole.key{color:var(--accent); border-color:var(--accent-line); background:var(--accent-dim)}
+
+  /* table */
+  .tablewrap{overflow:auto; max-height:560px}
+  table{border-collapse:collapse; width:100%; min-width:820px; font-size:12.5px}
+  thead th{
+    position:sticky; top:0; text-align:left; font-family:var(--mono); font-weight:600; font-size:10.5px;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); padding:11px 14px; white-space:nowrap;
+    background:var(--surface-2); border-bottom:1px solid var(--line-2);
+  }
+  tbody td{padding:9px 14px; border-bottom:1px solid var(--line); white-space:nowrap; font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--ink-2)}
+  tbody td.cid{color:var(--accent)}
+  tbody td.act{color:var(--ink-1); font-family:var(--sans); font-weight:500}
+  tbody tr:hover td{background:var(--surface-2)}
+  .tfoot{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid var(--line); color:var(--ink-3); font-family:var(--mono); font-size:11.5px}
+  .tfoot .spacer{margin-left:auto}
+
+  .foot{max-width:1500px; margin:0 auto; padding:8px 24px 40px; color:var(--ink-3); font-family:var(--mono); font-size:11px; letter-spacing:.02em}
+  .foot b{color:var(--ink-2); font-weight:500}
+
+  /* toast */
+  .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none;
+    background:var(--surface-3); color:var(--ink-1); border:1px solid var(--accent-line); border-radius:9px;
+    padding:11px 16px; font-family:var(--mono); font-size:12.5px; z-index:60; transition:opacity .25s, transform .25s; box-shadow:var(--shadow)}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast::before{content:"›  "; color:var(--accent)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important}
+  }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="brand">
+      <svg class="glyph" viewBox="0 0 34 34" aria-hidden="true">
+        <line class="edge" x1="6" y1="8" x2="17" y2="17"/><line class="edge" x1="17" y1="17" x2="6" y2="26"/>
+        <line class="edge" x1="17" y1="17" x2="28" y2="17"/>
+        <circle class="node" cx="6" cy="8" r="3.4"/><circle class="node" cx="6" cy="26" r="3.4"/>
+        <circle class="node" cx="17" cy="17" r="4"/><circle class="node" cx="28" cy="17" r="3.4"/>
+      </svg>
+      <div class="wordmark">PROCESS<b>//</b>FORGE
+        <span class="sub">Event Log Studio</span>
+      </div>
+    </div>
+    <div class="top-meta">
+      <span class="pill live"><span class="dot"></span>SIGNAVIO&nbsp;PROCESS&nbsp;INTELLIGENCE</span>
+      <span class="pill mono" id="fmtPill">CSV · UTF-8</span>
+      <button class="theme-btn" id="themeBtn" type="button">◐ THEME</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <!-- SIDEBAR -->
+    <aside>
+      <section class="panel">
+        <div class="panel-h"><span class="idx">01</span><h2>Industry Vertical</h2></div>
+        <div class="verticals" id="verticalList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h"><span class="idx">02</span><h2>Generation</h2></div>
+        <div class="controls">
+          <div class="field">
+            <div class="lab"><span>Cases</span><b id="casesVal">300</b></div>
+            <input type="range" id="casesRange" min="50" max="2500" step="25" value="300">
+          </div>
+          <div class="field">
+            <div class="lab"><span>Process noise</span><b id="noiseVal">Realistic</b></div>
+            <input type="range" id="noiseRange" min="0" max="100" step="5" value="45">
+          </div>
+          <div class="field">
+            <div class="lab"><span>Time span</span></div>
+            <div class="segwrap" id="spanSeg">
+              <div class="seg" data-days="30">30d</div>
+              <div class="seg on" data-days="90">90d</div>
+              <div class="seg" data-days="180">180d</div>
+              <div class="seg" data-days="365">1y</div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="lab"><span>Random seed</span></div>
+            <div class="seedrow">
+              <input type="text" id="seedInput" value="42" inputmode="numeric" spellcheck="false">
+              <button class="btn" id="shuffleBtn" type="button" title="Shuffle seed">
+                <svg viewBox="0 0 24 24"><path d="M4 7h4l9 10h3M4 17h4l3-3.3M14 7h3M17 4l3 3-3 3M17 20l3-3-3-3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="btnrow">
+            <button class="btn primary" id="genBtn" type="button">
+              <svg viewBox="0 0 24 24"><path d="M13 3 4 14h6l-1 7 9-11h-6z"/></svg>Generate log
+            </button>
+            <button class="btn" id="copyBtn" type="button" title="Copy CSV to clipboard">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+            </button>
+          </div>
+          <button class="btn" id="dlBtn" type="button" style="width:100%">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>Download Signavio CSV
+          </button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <section class="panel hero">
+        <div class="eyebrow" id="heroEyebrow">VERTICAL</div>
+        <h1 id="heroTitle">—</h1>
+        <p id="heroDesc">—</p>
+        <div class="obj" id="heroObj"></div>
+      </section>
+
+      <div class="kpis" id="kpis"></div>
+
+      <section class="panel">
+        <div class="panel-h"><span class="idx">03</span><h2>Discovered Process — Directly-Follows Flow</h2>
+          <div class="spacer"></div>
+          <span class="pill mono" id="flowMeta">happy path</span>
+        </div>
+        <div class="flowwrap">
+          <div class="flow-scroll"><div class="flow" id="flow"></div></div>
+          <div class="legend">
+            <span><i style="background:var(--accent)"></i>activity occurrence across cases</span>
+            <span><i style="background:var(--violet)"></i>performing role</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="twoup">
+        <section class="panel">
+          <div class="panel-h"><span class="idx">04</span><h2>Variants</h2><div class="spacer"></div><span class="pill mono" id="variantMeta">—</span></div>
+          <div class="variants" id="variants"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-h"><span class="idx">05</span><h2>Signavio Column Mapping</h2></div>
+          <div class="maplist" id="maplist"></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-h"><span class="idx">06</span><h2>Event Log</h2>
+          <div class="spacer"></div>
+          <span class="pill mono" id="rowMeta">—</span>
+        </div>
+        <div class="tablewrap"><table id="logTable"><thead id="logHead"></thead><tbody id="logBody"></tbody></table></div>
+        <div class="tfoot">
+          <span id="previewNote">showing first 200 of — events</span>
+          <span class="spacer"></span>
+          <button class="btn" id="dlBtn2" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>Download full CSV
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="foot">
+    PROCESS//FORGE generates <b>synthetic</b> event logs for demos, PoCs and training on SAP Signavio Process Intelligence.
+    No production data. Timestamps are UTC · schema: Case ID · Activity · Start/End Timestamp · Resource · case attributes.
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================ RNG ============================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hash(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return (h^h>>>16)>>>0;}
+const RI=(r,a,b)=>a+Math.floor(r()*(b-a+1));
+const RF=(r,a,b)=>a+r()*(b-a);
+const pick=(r,arr)=>arr[Math.floor(r()*arr.length)];
+
+/* ============================ Resource pools ============================ */
+const FN="ANESRLKMTHDCBPJVGFOWIYZ".split("");
+const SUR=["Okafor","Nguyen","Kaur","Rossi","Andersen","Haddad","Kovač","Silva","Müller","Ahmed","Larsson","Dubois","Novak","Costa","Yilmaz","Bauer","Fernandez","Petrov","Jensen","Walsh","Reyes","Cohen","Blanco","Marek","Vidal","Osei","Tanaka","Weber","Fischer","Romano","Serrano","Klein","Popa","Brandt","Lund","Farrell","Grozdanova","Ibrahim","Sorel","Voss"];
+const SYS=["BATCH_JOB_07","RPA_BOT_02","WF_ENGINE","SYS_S4HANA","EDI_GATEWAY","SCHED_SVC","OCR_SERVICE","API_INBOUND"];
+function pool(key,n){const r=mulberry32(hash("pool:"+key));const used=new Set();const out=[];let guard=0;while(out.length<n&&guard++<400){const nm=pick(r,FN)+". "+pick(r,SUR);if(!used.has(nm)){used.add(nm);out.push(nm);}}return out;}
+
+/* ============================ Attribute helpers ============================ */
+function cat(name,values,weights){return{name,kind:"category",values,weights:weights||null};}
+function amt(name,cur,min,max){return{name,kind:"amount",cur,min,max};}
+function drawAttr(r,a){
+  if(a.kind==="amount"){const v=Math.round(RF(r,a.min,a.max)/10)*10;return {raw:v.toFixed(2), disp:a.cur+" "+v.toLocaleString("en-US")};}
+  let v;
+  if(a.weights){let x=r(),acc=0;v=a.values[a.values.length-1];for(let i=0;i<a.values.length;i++){acc+=a.weights[i];if(x<=acc){v=a.values[i];break;}}}
+  else v=pick(r,a.values);
+  return {raw:v,disp:v};
+}
+
+/* ============================ ICONS ============================ */
+const IC={
+  cart:'<path d="M4 5h2l2 11h9l2-8H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/>',
+  bag:'<path d="M6 8h12l-1 12H7z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+  bank:'<path d="M4 10 12 4l8 6M5 10v8m14-8v8M9 10v8m6-8v8M3 20h18"/>',
+  shield:'<path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z"/>',
+  heart:'<path d="M12 20s-7-4.6-7-9.5A3.5 3.5 0 0 1 12 8a3.5 3.5 0 0 1 7 2.5C19 15.4 12 20 12 20z"/>',
+  factory:'<path d="M3 20V9l6 4V9l6 4V6l6 3v11z"/>',
+  signal:'<path d="M5 20v-4m5 4v-9m5 9V8m5 12V4"/>',
+  ticket:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12"/>',
+  truck:'<path d="M3 6h11v9H3zM14 9h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.4"/><circle cx="17" cy="18" r="1.4"/>',
+  bolt:'<path d="M13 3 5 13h5l-1 8 8-11h-5z"/>'
+};
+const ARR='<svg viewBox="0 0 24 14"><path d="M2 7h18m-5-4 5 4-5 4"/></svg>';
+
+/* ============================ VERTICALS ============================ */
+/* step: {a, role, p=1, rw=0, d:[loH,hiH], auto} ; exc:{after,p,path:[{a,role,d,auto}]} */
+const V=[
+{key:"p2p",name:"Procurement — Purchase-to-Pay",icon:IC.cart,system:"SAP S/4HANA · MM",prefix:"PR",object:"Purchase Requisition",
+ roles:{req:3,buy:4,app:3,ap:4,wh:4},
+ attrs:[cat("Vendor",["Ferro Supplies GmbH","Nordwind AG","Atlas Components","Brightline Ltd","Sierra Metals","Kestrel Trading"]),
+        cat("Material Group",["Raw Materials","MRO","IT Hardware","Services","Packaging"]),
+        amt("PO Value","EUR",800,240000),
+        cat("Company Code",["DE10","US20","IN30","BR40"]),
+        cat("Plant",["P100","P200","P300"])],
+ flow:[
+  {a:"Create Purchase Requisition",role:"req",d:[2,20]},
+  {a:"Approve Requisition",role:"app",rw:.09,d:[3,40]},
+  {a:"Create Purchase Order",role:"buy",d:[1,10]},
+  {a:"Send PO to Vendor",role:"buy",auto:true,d:[0.2,2]},
+  {a:"Change Purchase Order",role:"buy",p:.16,d:[4,30]},
+  {a:"Receive Goods",role:"wh",d:[36,260]},
+  {a:"Receive Invoice",role:"ap",auto:true,d:[6,80]},
+  {a:"Three-Way Match",role:"ap",rw:.14,d:[2,26]},
+  {a:"Clear Invoice for Payment",role:"ap",d:[24,120]}],
+ exc:{after:"Approve Requisition",p:.04,path:[{a:"Reject Requisition",role:"app",d:[2,20]}]}},
+
+{key:"o2c",name:"Retail — Order-to-Cash",icon:IC.bag,system:"SAP S/4HANA · SD",prefix:"SO",object:"Sales Order",
+ roles:{csr:5,wh:5,disp:3,ap:3},
+ attrs:[cat("Customer",["Meridian Retail","BlueMart","UrbanNest","Cyclone Sports","GreenLeaf Co","Pico Electronics"]),
+        cat("Sales Channel",["Web","Store","Marketplace","Wholesale"],[.44,.24,.2,.12]),
+        amt("Order Value","USD",25,4200),
+        cat("Region",["EMEA","AMER","APAC"]),
+        cat("Payment Method",["Card","PayPal","Invoice","BNPL"])],
+ flow:[
+  {a:"Create Sales Order",role:"csr",auto:true,d:[0.1,1]},
+  {a:"Credit Check",role:"ap",p:.55,d:[0.5,8]},
+  {a:"Confirm Order",role:"csr",d:[0.5,6]},
+  {a:"Pick Goods",role:"wh",d:[2,24]},
+  {a:"Pack Goods",role:"wh",d:[0.5,6]},
+  {a:"Ship Goods (Goods Issue)",role:"disp",d:[2,20]},
+  {a:"Create Invoice",role:"ap",auto:true,d:[0.1,2]},
+  {a:"Receive Payment",role:"ap",d:[24,360]}],
+ exc:{after:"Ship Goods (Goods Issue)",p:.07,path:[{a:"Return Initiated",role:"csr",d:[48,240]},{a:"Process Return",role:"wh",d:[6,48]},{a:"Issue Refund",role:"ap",d:[2,24]}]}},
+
+{key:"loan",name:"Banking — Loan Origination",icon:IC.bank,system:"FS Loan Management",prefix:"LN",object:"Loan Application",
+ roles:{agt:4,anl:4,und:3,rsk:2,bo:3},
+ attrs:[cat("Product",["Mortgage","Auto","Personal","SME"],[.34,.24,.28,.14]),
+        amt("Loan Amount","USD",4000,620000),
+        cat("Segment",["Retail","Affluent","Business"]),
+        cat("Branch",["BR-Central","BR-North","BR-Harbor","BR-Online"]),
+        cat("Channel",["Branch","Broker","Online"])],
+ flow:[
+  {a:"Submit Application",role:"agt",d:[0.2,4]},
+  {a:"Validate Documents",role:"anl",rw:.18,d:[4,48]},
+  {a:"Credit Bureau Check",role:"anl",auto:true,d:[0.2,3]},
+  {a:"Risk Scoring",role:"rsk",d:[2,20]},
+  {a:"Underwriting Review",role:"und",d:[6,60]},
+  {a:"Approve Application",role:"und",d:[1,12]},
+  {a:"Prepare Offer",role:"bo",d:[2,24]},
+  {a:"Customer Accepts Offer",role:"agt",d:[12,240]},
+  {a:"Disburse Funds",role:"bo",auto:true,d:[2,24]}],
+ exc:{after:"Underwriting Review",p:.19,path:[{a:"Decline Application",role:"und",d:[1,10]},{a:"Notify Applicant",role:"agt",auto:true,d:[0.2,4]}]}},
+
+{key:"claim",name:"Insurance — Claims Handling",icon:IC.shield,system:"Guidewire ClaimCenter",prefix:"CLM",object:"Claim",
+ roles:{intk:4,adj:5,inv:3,app:3,pay:2},
+ attrs:[cat("Policy Line",["Motor","Property","Health","Travel"],[.4,.26,.22,.12]),
+        amt("Claim Amount","EUR",120,85000),
+        cat("Severity",["Low","Medium","High"],[.55,.32,.13]),
+        cat("Region",["North","South","East","West"]),
+        cat("Channel",["App","Call Center","Broker"])],
+ flow:[
+  {a:"Report Claim (FNOL)",role:"intk",d:[0.1,2]},
+  {a:"Register Claim",role:"intk",auto:true,d:[0.2,3]},
+  {a:"Assign Adjuster",role:"adj",d:[1,16]},
+  {a:"Coverage Check",role:"adj",d:[2,24]},
+  {a:"Inspect Damage",role:"adj",p:.68,d:[24,160]},
+  {a:"Investigate Claim",role:"inv",p:.28,d:[24,220]},
+  {a:"Set Reserve",role:"adj",d:[2,20]},
+  {a:"Approve Settlement",role:"app",rw:.1,d:[4,48]},
+  {a:"Issue Payment",role:"pay",auto:true,d:[2,24]},
+  {a:"Close Claim",role:"adj",d:[2,20]}],
+ exc:{after:"Coverage Check",p:.1,path:[{a:"Deny Claim",role:"app",d:[4,40]},{a:"Send Denial Letter",role:"intk",auto:true,d:[0.2,6]}]}},
+
+{key:"health",name:"Healthcare — Patient Flow",icon:IC.heart,system:"Epic EHR",prefix:"ENC",object:"Encounter",
+ roles:{reg:4,nur:6,phy:5,lab:4,rx:3},
+ attrs:[cat("Department",["Cardiology","Orthopedics","Neurology","Emergency","Oncology"]),
+        cat("Admission Type",["Emergency","Elective","Referral"],[.42,.36,.22]),
+        cat("Age Band",["0-17","18-39","40-64","65+"],[.12,.3,.34,.24]),
+        cat("Payer",["Public","Private","Self-pay"])],
+ flow:[
+  {a:"Register Patient",role:"reg",d:[0.1,1.5]},
+  {a:"Triage",role:"nur",d:[0.2,3]},
+  {a:"Physician Assessment",role:"phy",d:[0.5,6]},
+  {a:"Order Diagnostics",role:"phy",p:.82,d:[0.2,3]},
+  {a:"Perform Lab / Imaging",role:"lab",rw:.12,d:[1,10]},
+  {a:"Review Results",role:"phy",d:[1,8]},
+  {a:"Treatment / Procedure",role:"phy",d:[2,24]},
+  {a:"Prescribe Medication",role:"rx",p:.7,d:[0.2,3]},
+  {a:"Discharge Patient",role:"nur",d:[1,8]},
+  {a:"Schedule Follow-up",role:"reg",p:.5,auto:true,d:[0.1,2]}],
+ exc:{after:"Triage",p:.05,path:[{a:"Admit to ICU",role:"phy",d:[0.5,4]},{a:"Critical Care",role:"nur",d:[48,300]}]}},
+
+{key:"mfg",name:"Manufacturing — Production Order",icon:IC.factory,system:"SAP S/4HANA · PP",prefix:"MO",object:"Production Order",
+ roles:{pln:3,opr:6,qa:3,log:3},
+ attrs:[cat("Plant",["Plant-A","Plant-B","Plant-C"]),
+        cat("Product Line",["Assembly","Injection","Machining","Coating"]),
+        cat("Work Center",["WC-101","WC-102","WC-201","WC-305"]),
+        cat("Batch Size",["S","M","L","XL"],[.28,.4,.24,.08]),
+        cat("Shift",["A","B","C"])],
+ flow:[
+  {a:"Create Production Order",role:"pln",auto:true,d:[0.2,4]},
+  {a:"Release Order",role:"pln",d:[1,12]},
+  {a:"Stage Materials",role:"log",d:[2,24]},
+  {a:"Machine Setup",role:"opr",d:[1,8]},
+  {a:"Run Production",role:"opr",rw:.2,d:[4,60]},
+  {a:"In-Process Check",role:"qa",p:.75,d:[0.5,6]},
+  {a:"Final QA Inspection",role:"qa",d:[1,10]},
+  {a:"Confirm Production",role:"opr",d:[0.5,4]},
+  {a:"Goods Receipt to Stock",role:"log",auto:true,d:[1,8]},
+  {a:"Close Order",role:"pln",d:[2,24]}],
+ exc:{after:"Final QA Inspection",p:.06,path:[{a:"Scrap Batch",role:"qa",d:[1,8]},{a:"Log Nonconformance",role:"qa",auto:true,d:[0.2,3]}]}},
+
+{key:"telco",name:"Telecom — Order Provisioning",icon:IC.signal,system:"Amdocs OMS",prefix:"TEL",object:"Service Order",
+ roles:{sal:5,prov:4,tech:5,act:2},
+ attrs:[cat("Service",["Fiber","Mobile","TV","Bundle"],[.34,.3,.14,.22]),
+        cat("Plan Tier",["Basic","Plus","Premium"]),
+        cat("Region",["Metro","Regional","Rural"]),
+        cat("Channel",["Retail","Online","Partner"])],
+ flow:[
+  {a:"Capture Order",role:"sal",d:[0.1,2]},
+  {a:"Credit Vetting",role:"prov",auto:true,d:[0.2,4]},
+  {a:"Reserve Resources",role:"prov",d:[1,12]},
+  {a:"Schedule Installation",role:"prov",d:[12,120]},
+  {a:"Dispatch Technician",role:"tech",p:.62,d:[2,24]},
+  {a:"Install Equipment",role:"tech",d:[1,8]},
+  {a:"Activate Service",role:"act",auto:true,d:[0.2,3]},
+  {a:"Test Service",role:"tech",rw:.11,d:[0.3,4]},
+  {a:"Send Welcome & First Bill",role:"act",auto:true,d:[1,24]}],
+ exc:{after:"Credit Vetting",p:.08,path:[{a:"Cancel Order",role:"sal",d:[1,24]}]}},
+
+{key:"itsm",name:"IT Service Mgmt — Incident",icon:IC.ticket,system:"ServiceNow ITSM",prefix:"INC",object:"Incident",
+ roles:{l1:5,l2:4,l3:3,usr:6},
+ attrs:[cat("Category",["Network","Application","Hardware","Access"]),
+        cat("Priority",["P1","P2","P3","P4"],[.06,.2,.44,.3]),
+        cat("Assignment Group",["Service Desk","Infra","Apps","Security"]),
+        cat("Channel",["Portal","Email","Phone","Chat"])],
+ flow:[
+  {a:"Log Incident",role:"usr",auto:true,d:[0.05,0.5]},
+  {a:"Categorize & Prioritize",role:"l1",d:[0.1,2]},
+  {a:"L1 Diagnosis",role:"l1",d:[0.3,6]},
+  {a:"Escalate to L2",role:"l2",p:.5,d:[0.5,8]},
+  {a:"Investigate",role:"l2",d:[1,16]},
+  {a:"Escalate to L3",role:"l3",p:.24,d:[1,12]},
+  {a:"Implement Fix",role:"l2",d:[0.5,10]},
+  {a:"Resolve Incident",role:"l1",d:[0.2,3]},
+  {a:"User Confirmation",role:"usr",rw:.16,d:[1,48]},
+  {a:"Close Incident",role:"l1",auto:true,d:[0.1,24]}]},
+
+{key:"logi",name:"Logistics — Outbound Shipment",icon:IC.truck,system:"SAP TM",prefix:"SHP",object:"Shipment",
+ roles:{pln:4,wh:5,drv:6,cus:3},
+ attrs:[cat("Carrier",["Aureus Freight","NovaLine","PortoExpress","RailCore"]),
+        cat("Mode",["Road","Air","Sea","Rail"],[.46,.18,.24,.12]),
+        cat("Destination",["EMEA","AMER","APAC","MEA"]),
+        cat("Weight Class",["<100kg","100-500kg","500kg-2t",">2t"]),
+        cat("Incoterm",["EXW","FOB","CIF","DAP"])],
+ flow:[
+  {a:"Create Delivery",role:"pln",auto:true,d:[0.2,4]},
+  {a:"Plan Transport",role:"pln",d:[1,16]},
+  {a:"Pick & Load",role:"wh",d:[2,20]},
+  {a:"Depart Origin",role:"drv",d:[1,12]},
+  {a:"Customs Clearance",role:"cus",p:.45,rw:.12,d:[6,120]},
+  {a:"Arrive at Hub",role:"drv",d:[12,240]},
+  {a:"Out for Delivery",role:"drv",rw:.1,d:[2,24]},
+  {a:"Delivered",role:"drv",d:[1,10]},
+  {a:"Proof of Delivery Confirmed",role:"cus",auto:true,d:[0.1,6]}],
+ exc:{after:"Out for Delivery",p:.07,path:[{a:"Delivery Failed",role:"drv",d:[1,10]},{a:"Reattempt Delivery",role:"drv",d:[12,72]},{a:"Delivered",role:"drv",d:[1,8]},{a:"Proof of Delivery Confirmed",role:"cus",auto:true,d:[0.1,4]}]}},
+
+{key:"util",name:"Utilities — New Connection",icon:IC.bolt,system:"SAP IS-U",prefix:"UTL",object:"Connection Request",
+ roles:{cs:4,sur:3,eng:5,bil:3},
+ attrs:[cat("Service",["Electricity","Gas","Water"],[.5,.28,.22]),
+        cat("Customer Type",["Residential","Commercial","Industrial"],[.62,.28,.1]),
+        cat("Region",["Zone-1","Zone-2","Zone-3","Zone-4"]),
+        cat("Tariff",["Standard","Time-of-Use","Fixed"])],
+ flow:[
+  {a:"Submit Connection Request",role:"cs",d:[0.2,4]},
+  {a:"Verify Site Address",role:"cs",auto:true,d:[0.2,8]},
+  {a:"Schedule Survey",role:"cs",d:[12,120]},
+  {a:"Site Survey",role:"sur",rw:.13,d:[2,24]},
+  {a:"Prepare Quote",role:"cs",p:.4,d:[8,72]},
+  {a:"Install Meter",role:"eng",d:[24,240]},
+  {a:"Energize / Activate",role:"eng",d:[1,24]},
+  {a:"Register Meter",role:"bil",auto:true,d:[0.5,8]},
+  {a:"Issue First Bill",role:"bil",auto:true,d:[240,720]}],
+ exc:{after:"Site Survey",p:.09,path:[{a:"Request Additional Works",role:"sur",d:[24,120]},{a:"Reject Request",role:"cs",d:[2,24]}]}}
+];
+
+/* build resource pools per vertical */
+V.forEach(v=>{v.rolePool={};for(const rk in v.roles){v.rolePool[rk]=pool(v.key+":"+rk,v.roles[rk]);}});
+
+/* ============================ Time model ============================ */
+function clampBusiness(d){ // move into Mon–Fri 08:00–18:00
+  for(let i=0;i<9;i++){
+    const day=d.getUTCDay(), h=d.getUTCHours();
+    if(day===6){d.setUTCDate(d.getUTCDate()+2);d.setUTCHours(8,d.getUTCMinutes(),0,0);continue;}
+    if(day===0){d.setUTCDate(d.getUTCDate()+1);d.setUTCHours(8,d.getUTCMinutes(),0,0);continue;}
+    if(h<8){d.setUTCHours(8,d.getUTCMinutes(),0,0);continue;}
+    if(h>=18){d.setUTCDate(d.getUTCDate()+1);d.setUTCHours(8,d.getUTCMinutes(),0,0);continue;}
+    break;
+  }
+  return d;
+}
+const fmtTS=d=>d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")+" "+String(d.getUTCHours()).padStart(2,"0")+":"+String(d.getUTCMinutes()).padStart(2,"0")+":"+String(d.getUTCSeconds()).padStart(2,"0");
+
+/* ============================ Generator ============================ */
+function generate(v,opts){
+  const r=mulberry32((opts.seed>>>0)^hash(v.key));
+  const noise=opts.noise; // 0..1
+  const rwK=0.4+1.4*noise, excK=0.4+1.4*noise;
+  const now=Date.UTC(2026,6,3,12,0,0);          // fixed "today" for reproducibility
+  const spanMs=opts.days*24*3600*1000;
+  const rows=[], cases=[];
+  const attrCols=v.attrs.map(a=>a.name);
+  const roleOf=rk=>Object.keys(v.roles).indexOf(rk); // for role display order
+
+  for(let c=0;c<opts.cases;c++){
+    const caseId=v.prefix+"-"+String(100000+c).slice(1);
+    const av=v.attrs.map(a=>drawAttr(r,a));
+    const attrRaw={}; v.attrs.forEach((a,i)=>attrRaw[a.name]=av[i].raw);
+    let t=new Date(now-spanMs+r()*spanMs*0.94);
+    const trace=[]; let ended=false;
+
+    const emit=(step)=>{
+      let start=new Date(t.getTime());
+      if(!step.auto) start=clampBusiness(start);
+      const procH=Math.min(RF(r,step.d[0],step.d[1])*0.4+0.15, RF(r,0.1,3));
+      let end=new Date(start.getTime()+procH*3600*1000);
+      if(!step.auto) end=clampBusiness(end);
+      const rl=step.role; const pl=v.rolePool[rl];
+      const resource=step.auto? pick(r,SYS) : pick(r,pl);
+      rows.push({caseId,activity:step.a,start:fmtTS(start),end:fmtTS(end),resource,role:rl.toUpperCase(),attr:attrRaw});
+      trace.push(step.a);
+      const gapH=RF(r,step.d[0],step.d[1]);
+      t=new Date(end.getTime()+gapH*3600*1000);
+    };
+
+    for(let s=0;s<v.flow.length;s++){
+      const step=v.flow[s];
+      if(step.p!==undefined && r()>step.p) continue;
+      emit(step);
+      if(step.rw){ let rp=Math.min(0.8,step.rw*rwK); if(r()<rp){ emit(step); } }
+      if(v.exc && v.exc.after===step.a && r()<v.exc.p*excK){
+        v.exc.path.forEach(ps=>emit({a:ps.a,role:ps.role,d:ps.d,auto:ps.auto}));
+        ended=true; break;
+      }
+    }
+    cases.push({caseId,trace,attrRaw});
+  }
+  return {v,rows,cases,attrCols,opts};
+}
+
+/* ============================ Stats ============================ */
+function analyze(g){
+  const {v,rows,cases}=g;
+  const acts=new Set(); rows.forEach(r=>acts.add(r.activity));
+  // variants
+  const vm=new Map();
+  cases.forEach(c=>{const k=c.trace.join(" ▸ ");vm.set(k,(vm.get(k)||0)+1);});
+  const variants=[...vm.entries()].map(([k,n])=>({trace:k,count:n})).sort((a,b)=>b.count-a.count);
+  const flowActs=new Set(v.flow.map(s=>s.a));
+  const excSet=new Set(); if(v.exc) v.exc.path.forEach(p=>{ if(!flowActs.has(p.a)) excSet.add(p.a); });
+  function tagOf(traceStr){
+    const arr=traceStr.split(" ▸ ");
+    if(arr.some(a=>excSet.has(a))) return "exception";
+    for(let i=1;i<arr.length;i++) if(arr[i]===arr[i-1]) return "rework";
+    return "variant";
+  }
+  variants.forEach(x=>x.tag=tagOf(x.trace));
+  // happy path = most frequent clean (straight-through) trace
+  let happyTrace=null;
+  for(const x of variants){ if(x.tag==="variant"){ happyTrace=x.trace; break; } }
+  if(happyTrace){ const hv=variants.find(x=>x.trace===happyTrace); if(hv) hv.tag="happy"; }
+  const happyShare=(vm.get(happyTrace)||0)/Math.max(1,cases.length);
+  // activity occurrence
+  const occ=new Map();
+  cases.forEach(c=>{const seen=new Set(c.trace);seen.forEach(a=>occ.set(a,(occ.get(a)||0)+1));});
+  // throughput
+  const caseSpan=new Map();
+  rows.forEach(r=>{const cur=caseSpan.get(r.caseId)||{min:r.start,max:r.end};
+    if(r.start<cur.min)cur.min=r.start; if(r.end>cur.max)cur.max=r.end; caseSpan.set(r.caseId,cur);});
+  let totH=0,cnt=0;
+  caseSpan.forEach(s=>{const h=(Date.parse(s.max.replace(" ","T")+"Z")-Date.parse(s.min.replace(" ","T")+"Z"))/3600000; if(isFinite(h)){totH+=h;cnt++;}});
+  const avgThru=cnt?totH/cnt:0;
+  return {actCount:acts.size, variants, happyShare, occ, avgThru, evCount:rows.length, caseCount:cases.length};
+}
+
+/* ============================ CSV ============================ */
+function toCSV(g){
+  const cols=["Case ID","Activity","Start Timestamp","End Timestamp","Resource","Role",...g.attrCols];
+  const esc=x=>{x=String(x); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;};
+  const lines=[cols.join(",")];
+  g.rows.forEach(r=>{
+    const base=[r.caseId,r.activity,r.start,r.end,r.resource,r.role];
+    g.attrCols.forEach(c=>base.push(r.attr[c]));
+    lines.push(base.map(esc).join(","));
+  });
+  return lines.join("\r\n");
+}
+
+/* ============================ Render ============================ */
+const $=s=>document.querySelector(s);
+const fmtN=n=>n.toLocaleString("en-US");
+function fmtDur(h){if(h<24)return h.toFixed(1)+" h";const d=h/24;if(d<10)return d.toFixed(1)+" d";return Math.round(d)+" d";}
+
+let state={vIndex:0, cases:300, noise:.45, days:90, seed:42, current:null};
+
+function renderVerticalList(){
+  const el=$("#verticalList"); el.innerHTML="";
+  V.forEach((v,i)=>{
+    const b=document.createElement("button");
+    b.className="vbtn"+(i===state.vIndex?" active":""); b.type="button";
+    b.innerHTML=`<span class="vico"><svg viewBox="0 0 24 24">${v.icon}</svg></span>
+      <span><span class="vname">${v.name.split(" — ")[1]}</span><span class="vsys">${v.name.split(" — ")[0]} · ${v.system}</span></span>
+      <span class="vchev">▸</span>`;
+    b.addEventListener("click",()=>{state.vIndex=i;renderVerticalList();run();});
+    el.appendChild(b);
+  });
+}
+
+function renderHero(v){
+  $("#heroEyebrow").textContent=v.name.split(" — ")[0].toUpperCase()+" · "+v.system;
+  $("#heroTitle").textContent=v.name.split(" — ")[1];
+  const objN=v.flow.length, exc=v.exc?v.exc.path.map(p=>p.a).join(", "):"—";
+  $("#heroDesc").textContent=`A synthetic ${v.object.toLowerCase()} process — ${objN} activity types across ${Object.keys(v.roles).length} performing roles, with realistic rework loops, optional steps and exception paths. Ready to ingest into SAP Signavio Process Intelligence.`;
+  $("#heroObj").innerHTML=`
+    <div>CASE OBJECT&nbsp; <b>${v.object}</b></div>
+    <div>CASE ID PREFIX&nbsp; <b>${v.prefix}-######</b></div>
+    <div>SOURCE SYSTEM&nbsp; <b>${v.system}</b></div>
+    <div>EXCEPTION PATH&nbsp; <b>${exc}</b></div>`;
+}
+
+function renderKPIs(a){
+  const el=$("#kpis");
+  const items=[
+    {l:"Cases",v:fmtN(a.caseCount),s:"process instances",acc:true},
+    {l:"Events",v:fmtN(a.evCount),s:"log rows",acc:false},
+    {l:"Activities",v:a.actCount,s:"distinct steps",acc:false},
+    {l:"Variants",v:fmtN(a.variants.length),s:"unique traces",acc:true},
+    {l:"Avg throughput",v:fmtDur(a.avgThru),s:"start → end",acc:false},
+    {l:"Happy-path",v:Math.round(a.happyShare*100)+"%",s:"conformance",acc:true},
+  ];
+  el.innerHTML=items.map(k=>`<div class="kpi ${k.acc?'accent':''}"><div class="k-lab">${k.l}</div><div class="k-val">${k.v}</div><div class="k-sub">${k.s}</div></div>`).join("");
+}
+
+function renderFlow(v,a){
+  const el=$("#flow"); el.innerHTML="";
+  const flow=v.flow;
+  flow.forEach((s,i)=>{
+    const occ=a.occ.get(s.a)||0, pct=Math.round(occ/Math.max(1,a.caseCount)*100);
+    const node=document.createElement("div");
+    node.className="fnode"+(i===0?" start":"");
+    node.innerHTML=`<div class="fstep">STEP ${String(i+1).padStart(2,"0")}${s.p!==undefined?" · optional":""}</div>
+      <div class="fact">${s.a}</div>
+      <div class="frole"><i></i>${s.role.toUpperCase()}${s.auto?" · auto":""}</div>
+      <div class="fbar"><i style="width:${pct}%"></i></div>
+      <div class="fpct">${pct}% of cases</div>`;
+    el.appendChild(node);
+    if(i<flow.length-1){const ar=document.createElement("div");ar.className="farrow";ar.innerHTML=ARR;el.appendChild(ar);}
+  });
+  $("#flowMeta").textContent=flow.length+" activities";
+}
+
+function renderVariants(a){
+  const el=$("#variants"); el.innerHTML="";
+  const top=a.variants.slice(0,7);
+  const max=top[0]?top[0].count:1;
+  top.forEach(x=>{
+    const pct=(x.count/a.caseCount*100);
+    const wrap=document.createElement("div"); wrap.className="vrow";
+    const shortTrace=x.trace.length>62?x.trace.slice(0,60)+"…":x.trace;
+    wrap.innerHTML=`
+      <div class="vmeta"><span class="vtag ${x.tag}">${x.tag}</span><span class="vtrace" title="${x.trace}">${shortTrace}</span></div>
+      <div class="vcount">${fmtN(x.count)} <small>· ${pct.toFixed(1)}%</small></div>
+      <div class="vbar-track"><div class="vbar-fill ${x.tag}" style="width:${(x.count/max*100).toFixed(1)}%"></div></div>`;
+    el.appendChild(wrap);
+  });
+  $("#variantMeta").textContent=a.variants.length+" total";
+}
+
+function renderMapping(g){
+  const el=$("#maplist"); el.innerHTML="";
+  const core=[
+    {f:"Case ID",k:"identifier",role:"Case ID",key:true},
+    {f:"Activity",k:"text",role:"Activity",key:true},
+    {f:"Start Timestamp",k:"datetime",role:"Start",key:true},
+    {f:"End Timestamp",k:"datetime",role:"End",key:false},
+    {f:"Resource",k:"text",role:"Resource",key:false},
+    {f:"Role",k:"text",role:"Attribute",key:false},
+  ];
+  const attrs=g.v.attrs.map(at=>({f:at.name,k:at.kind==="amount"?"numeric · "+at.cur:"categorical",role:"Case attr",key:false}));
+  [...core,...attrs].forEach(m=>{
+    const row=document.createElement("div"); row.className="maprow";
+    row.innerHTML=`<div><div class="mfield">${m.f}</div><div class="mkind">${m.k}</div></div><div class="mrole ${m.key?'key':''}">${m.role}</div>`;
+    el.appendChild(row);
+  });
+}
+
+function renderTable(g){
+  const head=$("#logHead"), body=$("#logBody");
+  const cols=["Case ID","Activity","Start Timestamp","End Timestamp","Resource","Role",...g.attrCols];
+  head.innerHTML="<tr>"+cols.map(c=>`<th>${c}</th>`).join("")+"</tr>";
+  const rows=g.rows.slice(0,200);
+  body.innerHTML=rows.map(r=>{
+    const cells=[`<td class="cid">${r.caseId}</td>`,`<td class="act">${r.activity}</td>`,`<td>${r.start}</td>`,`<td>${r.end}</td>`,`<td>${r.resource}</td>`,`<td>${r.role}</td>`];
+    g.attrCols.forEach((c,i)=>{const at=g.v.attrs[i];let disp=r.attr[c];if(at.kind==="amount")disp=at.cur+" "+Number(r.attr[c]).toLocaleString("en-US");cells.push(`<td>${disp}</td>`);});
+    return "<tr>"+cells.join("")+"</tr>";
+  }).join("");
+  $("#previewNote").textContent=`showing first ${Math.min(200,g.rows.length)} of ${fmtN(g.rows.length)} events`;
+  $("#rowMeta").textContent=fmtN(g.rows.length)+" rows · "+cols.length+" cols";
+}
+
+/* ============================ Orchestration ============================ */
+let genToken=0;
+function run(){
+  const v=V[state.vIndex];
+  const kp=$("#kpis"); kp.style.opacity=".45";
+  const my=++genToken;
+  requestAnimationFrame(()=>{
+    if(my!==genToken)return;
+    const g=generate(v,{cases:state.cases,noise:state.noise,days:state.days,seed:state.seed});
+    const a=analyze(g);
+    state.current=g;
+    renderHero(v); renderKPIs(a); renderFlow(v,a); renderVariants(a); renderMapping(g); renderTable(g);
+    kp.style.opacity="1";
+  });
+}
+
+/* toast */
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2000);}
+
+/* download / copy */
+function download(){
+  const g=state.current; if(!g)return;
+  const csv=toCSV(g);
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`signavio_${g.v.key}_eventlog_${g.opts.days}d_${g.opts.seed}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast(`Downloaded ${fmtN(g.rows.length)} events · ${g.v.prefix} log`);
+}
+async function copyCSV(){
+  const g=state.current; if(!g)return;
+  const csv=toCSV(g);
+  try{await navigator.clipboard.writeText(csv);toast(`Copied ${fmtN(g.rows.length)} rows to clipboard`);}
+  catch(e){toast("Clipboard blocked — use Download instead");}
+}
+
+/* ============================ Wire up ============================ */
+function setRangeFill(inp){const min=+inp.min,max=+inp.max;inp.style.setProperty("--fill",((inp.value-min)/(max-min)*100)+"%");}
+function noiseLabel(n){return n<20?"Clean":n<45?"Light":n<70?"Realistic":n<88?"Messy":"Chaotic";}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  renderVerticalList();
+
+  const casesR=$("#casesRange"), noiseR=$("#noiseRange");
+  setRangeFill(casesR); setRangeFill(noiseR);
+  casesR.addEventListener("input",()=>{state.cases=+casesR.value;$("#casesVal").textContent=fmtN(state.cases);setRangeFill(casesR);});
+  casesR.addEventListener("change",run);
+  noiseR.addEventListener("input",()=>{state.noise=+noiseR.value/100;$("#noiseVal").textContent=noiseLabel(+noiseR.value);setRangeFill(noiseR);});
+  noiseR.addEventListener("change",run);
+  $("#noiseVal").textContent=noiseLabel(+noiseR.value);
+
+  $("#spanSeg").addEventListener("click",e=>{
+    const s=e.target.closest(".seg"); if(!s)return;
+    [...$("#spanSeg").children].forEach(x=>x.classList.remove("on")); s.classList.add("on");
+    state.days=+s.dataset.days; run();
+  });
+
+  const seedI=$("#seedInput");
+  seedI.addEventListener("change",()=>{const val=parseInt(seedI.value.replace(/\D/g,""))||0;state.seed=val;seedI.value=val;run();});
+  $("#shuffleBtn").addEventListener("click",()=>{state.seed=Math.floor(Math.random()*99999);seedI.value=state.seed;run();});
+
+  $("#genBtn").addEventListener("click",run);
+  $("#dlBtn").addEventListener("click",download);
+  $("#dlBtn2").addEventListener("click",download);
+  $("#copyBtn").addEventListener("click",copyCSV);
+
+  // theme toggle
+  const tb=$("#themeBtn");
+  tb.addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const sysDark=window.matchMedia("(prefers-color-scheme:dark)").matches;
+    const next=cur? (cur==="dark"?"light":"dark") : (sysDark?"light":"dark");
+    document.documentElement.setAttribute("data-theme",next);
+  });
+
+  run();
+});
+</script>
