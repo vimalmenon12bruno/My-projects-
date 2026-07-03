@@ -1,0 +1,18 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "processforge",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "title": "PROCESS//FORGE — Event Log Studio",
+    "description": "Synthetic event logs for SAP Signavio Process Intelligence",
+    "applicationVersion": { "version": "1.0.0" }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "processforge.service"
+  },
+  "sap.ui5": {
+    "dependencies": {}
+  }
+}

@@ -1,0 +1,67 @@
+# SAP BTP · Kyma runtime deployment.
+# 1) Build & push the image:   docker build -t <registry>/processforge:1.0.0 . && docker push <registry>/processforge:1.0.0
+# 2) Set REGISTRY_IMAGE below and your Kyma cluster domain, then:  kubectl apply -f deploy/kyma/processforge.yaml
+# The APIRule exposes it publicly at  https://processforge.<your-kyma-domain>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processforge
+  labels:
+    app: processforge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: processforge
+  template:
+    metadata:
+      labels:
+        app: processforge
+    spec:
+      containers:
+        - name: processforge
+          image: REGISTRY_IMAGE # e.g. yourregistry.io/processforge:1.0.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: processforge
+spec:
+  selector:
+    app: processforge
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+# APIRule v2 — exposes the Service through the Kyma API Gateway.
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: processforge
+spec:
+  hosts:
+    - processforge # -> https://processforge.<your-kyma-domain>
+  service:
+    name: processforge
+    port: 80
+  gateway: kyma-system/kyma-gateway
+  rules:
+    - path: /*
+      methods: ["GET"]
+      noAuth: true

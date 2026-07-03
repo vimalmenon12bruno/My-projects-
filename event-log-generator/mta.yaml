@@ -1,0 +1,63 @@
+_schema-version: "3.2"
+ID: processforge
+version: 1.0.0
+description: PROCESS//FORGE — synthetic event log studio for SAP Signavio Process Intelligence
+
+parameters:
+  enable-parallel-deployments: true
+
+modules:
+  # ---- 1. Static UI, stored in the HTML5 Application Repository ----
+  - name: processforge-ui
+    type: html5
+    path: ui
+    build-parameters:
+      builder: custom
+      supported-platforms: []
+      build-result: dist
+      commands:
+        - npm install
+        - npm run build
+
+  # ---- 2. Uploads the built UI content into the app-host service ----
+  - name: processforge-ui-deployer
+    type: com.sap.application.content
+    requires:
+      - name: processforge-html5-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - name: processforge-ui
+          artifacts:
+            - processforge-ui.zip
+          target-path: resources/
+
+  # ---- 3. Standalone approuter that serves the app publicly (no login) ----
+  - name: processforge-router
+    type: approuter.nodejs
+    path: router
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: processforge-html5-runtime
+    provides:
+      - name: app-url
+        properties:
+          url: "${default-url}"
+
+resources:
+  - name: processforge-html5-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+
+  - name: processforge-html5-runtime
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime

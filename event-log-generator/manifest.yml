@@ -1,0 +1,19 @@
+---
+# SAP BTP · Cloud Foundry runtime — static hosting via the staticfile buildpack.
+# Deploy with:  cf push
+# The app is a single self-contained HTML file served by nginx (no backend).
+applications:
+  - name: processforge
+    memory: 64M
+    disk_quota: 256M
+    instances: 1
+    buildpacks:
+      - staticfile_buildpack
+    path: ./ui
+    stack: cflinuxfs4
+    health-check-type: port
+    random-route: true
+    # To pin a fixed URL instead of random-route, comment out random-route above
+    # and declare an explicit route (replace the domain with one from `cf domains`):
+    # routes:
+    #   - route: processforge.cfapps.eu10-004.hana.ondemand.com

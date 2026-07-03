@@ -1,0 +1,9 @@
+{
+  "name": "processforge-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static UI module for the PROCESS//FORGE event log studio (HTML5 App Repository content).",
+  "scripts": {
+    "build": "node build.js"
+  }
+}

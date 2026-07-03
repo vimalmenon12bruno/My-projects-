@@ -1,0 +1,16 @@
+{
+  "name": "processforge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PROCESS//FORGE — self-contained event log studio for SAP Signavio Process Intelligence, packaged for SAP BTP.",
+  "scripts": {
+    "start": "npx --yes http-server ui -p 8080 -c-1",
+    "build:mta": "mbt build -p=cf",
+    "deploy:cf": "cf push",
+    "deploy:mta": "npm run build:mta && cf deploy mta_archives/processforge_1.0.0.mtar",
+    "docker:build": "docker build -t processforge:1.0.0 ."
+  },
+  "devDependencies": {
+    "mbt": "^1.2.29"
+  }
+}

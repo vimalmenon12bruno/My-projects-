@@ -1,0 +1,8 @@
+# Keep the pushed staticfile app lean — these are only used by the MTA build.
+package.json
+build.js
+manifest.json
+xs-app.json
+node_modules
+dist
+.cfignore

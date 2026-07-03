@@ -1,0 +1,15 @@
+# Build output & dependencies
+node_modules/
+ui/dist/
+ui/node_modules/
+router/node_modules/
+resources/
+
+# MTA build archives
+mta_archives/
+*.mtar
+.mta/
+
+# CF / logs
+*.log
+.cf/

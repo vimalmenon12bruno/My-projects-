@@ -1,0 +1,7 @@
+# Cloud Foundry staticfile buildpack configuration.
+root: .
+# Serve everything over HTTPS and tell browsers to remember it.
+force_https: true
+http_strict_transport_security: true
+# Single-page app: unknown paths fall back to index.html.
+pushstate: enabled
